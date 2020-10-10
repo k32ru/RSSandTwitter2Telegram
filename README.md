@@ -1,0 +1,2 @@
+# RSSandTwitter2Telegram
+RSSとTwitterの更新内容をTelegramに送信します。
