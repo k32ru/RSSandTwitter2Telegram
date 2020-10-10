@@ -1,12 +1,8 @@
 
 function isNew(nowpubDate,lastpubDate){
-  //Logger.log(nowpubDate);
-  //Logger.log(lastpubDate);
   var postDateD = new Date(nowpubDate);
   var lastCheckDateD = new Date(lastpubDate);
-  var result  = postDateD.getTime()  > lastCheckDateD.getTime()
-  //Logger.log(result);
-  return result;
+  return ( postDateD.getTime()  > lastCheckDateD.getTime());
 }
 function checkUpdate(feed){
    var newFeeds = [];
