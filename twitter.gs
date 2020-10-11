@@ -117,7 +117,6 @@ function getListTimeline(userData){
   }
   
   if (twitterService.hasAccess()) {
-
       var response = twitterService.fetch(url, {
       method: "get",
       muteHttpExceptions: true,
@@ -146,7 +145,6 @@ function getUserTimeline(userData){
   }else{
     sendMessage('新しい設定が追加されました。設定内容'+ 'id:'+userData['getData'] + '\n 最近の3件のデータを表示します。');
     url = 'https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=' + userData['getData'] + '&count=3';
-
   }
   if (twitterService.hasAccess()) {
       
@@ -229,10 +227,12 @@ function Twitter2Telegram(){
        Logger.log('指定されたtypeに誤りがあります' + userData['type'] )
       //sendDebugMessage('指定されたtypeに誤りがあります' + userData['type']);
     }
-    //新着のツイートをTGに送信する。
+
     if(tweetdata.length){
-        var lastIdStr = sendformattedMessage(tweetdata,userData);
-        updateSpreadSheetTwitter(workColumn,lastIdStr);
+      //新着のツイートをTGに送信する。
+      var lastIdStr = sendformattedMessage(tweetdata,userData);
+      //更新のあった行にスプシの更新をする
+      updateSpreadSheetTwitter(workColumn,lastIdStr);
       }
     workColumn=workColumn+1
   }
