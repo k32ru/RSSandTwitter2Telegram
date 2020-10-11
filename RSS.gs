@@ -2,22 +2,33 @@
 function isNew(nowpubDate,lastpubDate){
   var postDateD = new Date(nowpubDate);
   var lastCheckDateD = new Date(lastpubDate);
-  return ( postDateD.getTime()  > lastCheckDateD.getTime());
+  var result = postDateD.getTime()  > lastCheckDateD.getTime();
+  
+  return result;
 }
 function checkUpdate(feed){
    var newFeeds = [];
    try {
     var xml = UrlFetchApp.fetch(feed['url']).getContentText();
     var document = XmlService.parse(xml);
-     //var siteTitle = document.getRootElement().getChildren("channel")[0].getChildren("title");
-     Logger.log('siteTitle' + siteTitle);
     var entries = document.getRootElement().getChildren("channel")[0].getChildren("item");
    }
    catch(e){
     Logger.log(feed['url']+ 'でデータの取得エラー発生')
     return -1
    } 
-   entries.reverse();
+  //Logger.log(entries);
+   //lastPubDateが空の時は最新の1つを表示する。
+  if(!feed['lastPubDate']) {
+    sendMessage('新しい設定が追加されました URL:' + feed['url'] + '\n最近の1件のデータを表示します。');
+    var title = entries[0].getChildText("title");
+    var link = entries[0].getChildText("link");
+    var pubDate = entries[0].getChildText("pubDate");
+    //var category = entries[0].getChildText("category");
+    newFeeds.push({title:title,link:link,pubDate:pubDate}); 
+    return newFeeds;
+  }else{
+    entries.reverse();
     for(var ii = 0; ii < entries.length; ii ++){
       var title = entries[ii].getChildText("title");
       var link = entries[ii].getChildText("link");
@@ -26,29 +37,10 @@ function checkUpdate(feed){
       if(isNew(pubDate,feed['lastPubDate'])){
         newFeeds.push({title:title,link:link,pubDate:pubDate});
       }
-      
     }
-  return newFeeds;
-}
-//初回用 RSSを取得し、その時点で最新の記事のpubDateをスプシに書き込む。
-function setlastPubDateFoce(){
-  feeds = loadRssUrls();
-  for(const feed of feeds){
-    try {
-      var xml = UrlFetchApp.fetch(feed['url']).getContentText();
-      var document = XmlService.parse(xml);
-      var entries = document.getRootElement().getChildren("channel")[0].getChildren("item");
-    }
-    catch(e){
-      Logger.log(feed['url'] + 'でデータの取得エラー発生');
-      return -1
-    } 
-    feed['lastPubDate'] = entries[0].getChildText("pubDate");
+    return newFeeds;
   }
-  
-  updateSpreadSheet(feeds);
 }
-  
 //エクセルのセルからRSSの記載されているURLを持ってくる
 function loadRssUrls(){
   var rssUrls = []
@@ -78,18 +70,19 @@ function sendToTelegram(newFeeds){
 
 function updateSpreadSheet(feed,changeColumn){
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("RSS");
-  sheet.getRange(changeColumn, 3).setValue(feeds['lastPubDate']);
+  sheet.getRange(changeColumn, 3).setValue(feed['lastPubDate']);
 }
 function RssCheck2tgMain(){
   feeds = loadRssUrls();
   Logger.log(feeds)
-    var workColumn = 1;
+  var workColumn = 2;
   for(const feed of feeds){
     var newFeeds = checkUpdate(feed);
     if(newFeeds.length){
       //更新のあったRSSについては、lastPubDateを取得した時点で最新のもに変える
       feed['lastPubDate'] = newFeeds[newFeeds.length - 1]['pubDate'];
       sendToTelegram(newFeeds);
+      Logger.log(feed)
       updateSpreadSheet(feed,workColumn);
     }
     workColumn = workColumn +1;
